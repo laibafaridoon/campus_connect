@@ -20,11 +20,19 @@ class StudentDashboardController extends Controller {
 
         $trends = [];
         for ($i = 6; $i >= 0; $i--) {
-            $date = date('j M', strtotime("-$i days"));
+            $dateStart = date('Y-m-d 00:00:00', strtotime("-$i days"));
+            $dateEnd = date('Y-m-d 23:59:59', strtotime("-$i days"));
+            $dateLabel = date('j M', strtotime("-$i days"));
+
+            $lostFoundCount = LostItem::whereBetween('created_at', [$dateStart, $dateEnd])->count()
+                            + FoundItem::whereBetween('created_at', [$dateStart, $dateEnd])->count();
+            
+            $marketCount = Product::whereBetween('created_at', [$dateStart, $dateEnd])->count();
+
             $trends[] = [
-                "name" => $date,
-                "lostFound" => rand(1, 10),
-                "marketplace" => rand(2, 15)
+                "name" => $dateLabel,
+                "lostFound" => $lostFoundCount,
+                "marketplace" => $marketCount
             ];
         }
 
@@ -41,20 +49,24 @@ class StudentDashboardController extends Controller {
         
         if (empty($donutChart)) {
             $donutChart = [
-                ['name' => 'Electronics', 'value' => 45],
-                ['name' => 'Books', 'value' => 25],
-                ['name' => 'Keys & Cards', 'value' => 20],
-                ['name' => 'Others', 'value' => 10],
+                ['name' => 'No Data', 'value' => 1]
             ];
         }
 
-        $campuses = [
-            ['name' => 'Islamabad', 'value' => 42],
-            ['name' => 'Lahore', 'value' => 28],
-            ['name' => 'Abbottabad', 'value' => 18],
-            ['name' => 'Wah', 'value' => 7],
-            ['name' => 'Sahiwal', 'value' => 5],
-        ];
+        $campusesData = \App\Models\User::groupBy('campus')
+            ->selectRaw('campus as name, count(*) as value')
+            ->get();
+        $campuses = [];
+        foreach ($campusesData as $c) {
+            if ($c->name) {
+                $campuses[] = ['name' => $c->name, 'value' => $c->value];
+            }
+        }
+        if (empty($campuses)) {
+            $campuses = [
+                ['name' => 'Abbottabad', 'value' => 1]
+            ];
+        }
 
         $announcements = [
             [
@@ -71,10 +83,24 @@ class StudentDashboardController extends Controller {
             ],
         ];
 
-        $activities = [
-            ["id" => 1, "text" => "You reported a lost HP Laptop", "time" => "2 hours ago", "type" => "primary"],
-            ["id" => 2, "text" => "Admin approved your Dell Charger listing", "time" => "1 day ago", "type" => "success"],
-        ];
+        $activities = [];
+        $notifs = \App\Models\Notification::where('user_id', $userId)
+            ->orderBy('created_at', 'desc')
+            ->limit(5)
+            ->get();
+        foreach ($notifs as $n) {
+            $activities[] = [
+                "id" => $n->id,
+                "text" => $n->message,
+                "time" => $n->created_at ? $n->created_at->diffForHumans() : "Just now",
+                "type" => str_contains($n->title, 'Approve') ? 'success' : (str_contains($n->title, 'Reject') ? 'danger' : 'primary')
+            ];
+        }
+        if (empty($activities)) {
+            $activities = [
+                ["id" => 1, "text" => "Welcome to CampusConnect!", "time" => "Just now", "type" => "primary"]
+            ];
+        }
 
         return response()->json([
             "stats" => [
@@ -119,5 +145,14 @@ class StudentDashboardController extends Controller {
         $userId = $request->auth_user->id;
         \App\Models\Notification::where('id', $id)->where('user_id', $userId)->update(['is_read' => true]);
         return response()->json(["message" => "Marked as read"]);
+    }
+
+    public function publicStats() {
+        return response()->json([
+            "students" => \App\Models\User::count(),
+            "products" => \App\Models\Product::where('status', 'approved')->count(),
+            "lost_recovered" => \App\Models\FoundItem::where('status', 'returned')->count() + \App\Models\LostItem::where('status', 'returned')->count(),
+            "claims" => \App\Models\Claim::where('status', 'approved')->count()
+        ]);
     }
 }

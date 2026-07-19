@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   GraduationCap, LayoutDashboard, Search, MapPin, Calendar, Info, AlertTriangle, CheckCircle,
-  Plus, Edit, Trash2, Bell, User, Settings, LogOut, Menu, X, ShoppingBag, ListCollapse
+  Plus, Edit, Trash2, Bell, User, Settings, LogOut, Menu, X, ShoppingBag, ListCollapse, Heart
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import axios from "axios";
@@ -76,6 +76,25 @@ export default function StudentDashboard() {
   const [errorMsg, setErrorMsg] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
 
+  // Wishlist, Wanted, Claims States
+  const [wishlist, setWishlist] = useState([]);
+  const [wantedPosts, setWantedPosts] = useState([]);
+  const [myWantedPosts, setMyWantedPosts] = useState([]);
+  const [myClaims, setMyClaims] = useState([]);
+  const [receivedClaims, setReceivedClaims] = useState([]);
+  const [showWantedModal, setShowWantedModal] = useState(false);
+  const [showClaimModal, setShowClaimModal] = useState(false);
+  const [claimItemId, setClaimItemId] = useState(null);
+  const [claimMessage, setClaimMessage] = useState("");
+  const [editingWanted, setEditingWanted] = useState(null);
+  const [wantedForm, setWantedForm] = useState({
+    title: "",
+    description: "",
+    budget: "",
+    condition: "Medium",
+    category_id: ""
+  });
+
   // Redirect if not logged in
   useEffect(() => {
     if (!loading && !student) {
@@ -92,6 +111,9 @@ export default function StudentDashboard() {
       fetchProducts();
       fetchMyItems();
       fetchNotifications();
+      fetchWishlist();
+      fetchWantedPosts();
+      fetchClaims();
     }
   }, [student, activeTab]);
 
@@ -175,6 +197,147 @@ export default function StudentDashboard() {
         { id: 2, message: "Your product listing 'Scientific Calculator' is live.", is_read: true, created_at: "1 day ago" }
       ]);
       setNotificationCount(1);
+    }
+  };
+
+  const fetchWishlist = async () => {
+    try {
+      const res = await axios.get("/wishlist");
+      setWishlist(res.data || []);
+    } catch (e) {
+      console.error("Failed to fetch wishlist", e);
+    }
+  };
+
+  const fetchWantedPosts = async () => {
+    try {
+      const [browseRes, mineRes] = await Promise.all([
+        axios.get("/wanted-posts/browse"),
+        axios.get("/wanted-posts/mine")
+      ]);
+      setWantedPosts(browseRes.data || []);
+      setMyWantedPosts(mineRes.data || []);
+    } catch (e) {
+      console.error("Failed to fetch wanted posts", e);
+    }
+  };
+
+  const fetchClaims = async () => {
+    try {
+      const [mineRes, recRes] = await Promise.all([
+        axios.get("/claims/mine"),
+        axios.get("/claims/received")
+      ]);
+      setMyClaims(mineRes.data || []);
+      setReceivedClaims(recRes.data || []);
+    } catch (e) {
+      console.error("Failed to fetch claims", e);
+    }
+  };
+
+  const toggleWishlist = async (productId) => {
+    setErrorMsg("");
+    setSuccessMsg("");
+    try {
+      const exists = wishlist.some(w => w.product_id === productId);
+      if (exists) {
+        await axios.delete(`/wishlist/${productId}`);
+        setSuccessMsg("Removed from wishlist.");
+      } else {
+        await axios.post("/wishlist", { product_id: productId });
+        setSuccessMsg("Added to wishlist.");
+      }
+      fetchWishlist();
+    } catch (e) {
+      console.error("Wishlist operation failed", e);
+      setErrorMsg("Wishlist operation failed.");
+    }
+  };
+
+  const handleClaimSubmit = async (e) => {
+    e.preventDefault();
+    setErrorMsg("");
+    setSuccessMsg("");
+    if (!claimMessage) {
+      setErrorMsg("Please write a description to prove ownership.");
+      return;
+    }
+    try {
+      await axios.post("/claims", { found_item_id: claimItemId, message: claimMessage });
+      setSuccessMsg("Ownership claim request submitted successfully.");
+      setShowClaimModal(false);
+      setClaimMessage("");
+      fetchClaims();
+    } catch (e) {
+      console.error("Failed to submit claim", e);
+      setErrorMsg("Failed to submit ownership claim.");
+    }
+  };
+
+  const handleClaimStatusUpdate = async (claimId, status) => {
+    setErrorMsg("");
+    setSuccessMsg("");
+    try {
+      await axios.put(`/claims/${claimId}/status`, { status });
+      setSuccessMsg(`Claim has been ${status}.`);
+      fetchClaims();
+      fetchLostFoundItems();
+    } catch (e) {
+      console.error("Failed to update claim status", e);
+      setErrorMsg("Failed to update claim status.");
+    }
+  };
+
+  const handleWantedSubmit = async (e) => {
+    e.preventDefault();
+    setErrorMsg("");
+    setSuccessMsg("");
+    if (!wantedForm.title || !wantedForm.description) {
+      setErrorMsg("Please fill in required fields.");
+      return;
+    }
+    try {
+      if (editingWanted) {
+        await axios.put(`/wanted-posts/${editingWanted.id}`, wantedForm);
+        setSuccessMsg("Wanted request updated successfully.");
+      } else {
+        await axios.post("/wanted-posts", wantedForm);
+        setSuccessMsg("Wanted request created successfully.");
+      }
+      setShowWantedModal(false);
+      setWantedForm({ title: "", description: "", budget: "", condition: "Medium", category_id: "" });
+      setEditingWanted(null);
+      fetchWantedPosts();
+    } catch (e) {
+      console.error("Failed to save wanted post", e);
+      setErrorMsg("Failed to save wanted request.");
+    }
+  };
+
+  const handleWantedDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this wanted request?")) return;
+    setErrorMsg("");
+    setSuccessMsg("");
+    try {
+      await axios.delete(`/wanted-posts/${id}`);
+      setSuccessMsg("Wanted request deleted successfully.");
+      fetchWantedPosts();
+    } catch (e) {
+      console.error("Failed to delete wanted post", e);
+      setErrorMsg("Failed to delete wanted request.");
+    }
+  };
+
+  const handleWantedFulfilled = async (id) => {
+    setErrorMsg("");
+    setSuccessMsg("");
+    try {
+      await axios.post(`/wanted-posts/${id}/fulfilled`);
+      setSuccessMsg("Marked wanted request as fulfilled!");
+      fetchWantedPosts();
+    } catch (e) {
+      console.error("Failed to mark fulfilled", e);
+      setErrorMsg("Failed to update status.");
     }
   };
 
@@ -372,6 +535,24 @@ export default function StudentDashboard() {
             </button>
           </li>
           <li className="db-sidebar-item">
+            <button className={`db-sidebar-link ${activeTab === "wishlist" ? "active" : ""}`} onClick={() => { setActiveTab("wishlist"); setSidebarOpen(false); }}>
+              <Heart size={18} />
+              <span>Wishlist</span>
+            </button>
+          </li>
+          <li className="db-sidebar-item">
+            <button className={`db-sidebar-link ${activeTab === "wanted" ? "active" : ""}`} onClick={() => { setActiveTab("wanted"); setSidebarOpen(false); }}>
+              <Search size={18} />
+              <span>Wanted Requests</span>
+            </button>
+          </li>
+          <li className="db-sidebar-item">
+            <button className={`db-sidebar-link ${activeTab === "claims" ? "active" : ""}`} onClick={() => { setActiveTab("claims"); setSidebarOpen(false); }}>
+              <CheckCircle size={18} />
+              <span>Claims Portal</span>
+            </button>
+          </li>
+          <li className="db-sidebar-item">
             <button className={`db-sidebar-link ${activeTab === "notifications" ? "active" : ""}`} onClick={() => { setActiveTab("notifications"); setSidebarOpen(false); }}>
               <div style={{ display: "flex", alignItems: "center", gap: "0.85rem", width: "100%" }}>
                 <Bell size={18} />
@@ -420,6 +601,9 @@ export default function StudentDashboard() {
               {activeTab === "buysell" && "Buy & Sell Marketplace"}
               {activeTab === "myreports" && "My Lost & Found Reports"}
               {activeTab === "mylistings" && "My Product Listings"}
+              {activeTab === "wishlist" && "My Saved Wishlist"}
+              {activeTab === "wanted" && "Wanted Item Requests"}
+              {activeTab === "claims" && "Item Ownership Claims Portal"}
               {activeTab === "notifications" && "Announcements & Updates"}
               {activeTab === "profile" && "Student Profile Info"}
               {activeTab === "settings" && "Account Settings"}
@@ -733,6 +917,15 @@ export default function StudentDashboard() {
                         <div className="item-card-footer">
                           <span className="item-author">By: {item.user?.name}</span>
                         </div>
+                        {item.user_id !== student?.id && (
+                          <button
+                            type="button"
+                            onClick={() => { setClaimItemId(item.id); setClaimMessage(""); setShowClaimModal(true); }}
+                            style={{ marginTop: "0.75rem", width: "100%", padding: "0.5rem", borderRadius: "0.5rem", border: "1px solid #bbf7d0", background: "#f0fdf4", color: "#16a34a", fontWeight: "600", cursor: "pointer", fontSize: "0.8rem", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.4rem" }}
+                          >
+                            <CheckCircle size={14} /> This is mine — Claim It
+                          </button>
+                        )}
                       </div>
                     </div>
                   ))
@@ -786,7 +979,9 @@ export default function StudentDashboard() {
                 {filteredProducts.length === 0 ? (
                   <p style={{ color: "#64748b", fontSize: "0.9rem" }}>No matching listings found.</p>
                 ) : (
-                  filteredProducts.map((prod) => (
+                  filteredProducts.map((prod) => {
+                    const isWishlisted = wishlist.some(w => w.product_id === prod.id);
+                    return (
                     <div key={prod.id} className="item-card">
                       <img
                         src={prod.image_url || "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=500&auto=format&fit=crop&q=60"}
@@ -809,9 +1004,18 @@ export default function StudentDashboard() {
                           <span className="item-author">By: {prod.user?.name}</span>
                           <span className="item-price">Rs. {prod.price}</span>
                         </div>
+                        <button
+                          type="button"
+                          onClick={() => toggleWishlist(prod.id)}
+                          style={{ marginTop: "0.75rem", width: "100%", padding: "0.5rem", borderRadius: "0.5rem", border: isWishlisted ? "1px solid #fecdd3" : "1px solid #e2e8f0", background: isWishlisted ? "#fff1f2" : "#f8fafc", color: isWishlisted ? "#e11d48" : "#64748b", fontWeight: "600", cursor: "pointer", fontSize: "0.8rem", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.4rem" }}
+                        >
+                          <Heart size={14} style={{ fill: isWishlisted ? "#e11d48" : "none" }} />
+                          {isWishlisted ? "Saved to Wishlist" : "Save to Wishlist"}
+                        </button>
                       </div>
                     </div>
-                  ))
+                    );
+                  })
                 )}
               </div>
             </>
@@ -920,6 +1124,243 @@ export default function StudentDashboard() {
                 </tbody>
               </table>
             </div>
+          )}
+
+          {/* TAB: WISHLIST */}
+          {activeTab === "wishlist" && (
+            <>
+              <div className="section-header">
+                <p style={{ color: "#64748b", margin: 0 }}>
+                  Products you've saved for later. Click the heart icon on any product in Buy &amp; Sell to add it here.
+                </p>
+              </div>
+              <div className="cards-grid">
+                {wishlist.length === 0 ? (
+                  <div style={{ gridColumn: "1 / -1", textAlign: "center", padding: "3rem 0", color: "#64748b" }}>
+                    <Heart size={48} style={{ color: "#e2e8f0", marginBottom: "1rem" }} />
+                    <p style={{ margin: 0, fontWeight: "600" }}>Your wishlist is empty.</p>
+                    <p style={{ margin: "0.5rem 0 0 0", fontSize: "0.85rem" }}>Go to Buy &amp; Sell and save products you like.</p>
+                  </div>
+                ) : (
+                  wishlist.map((w) => {
+                    const prod = w.product || {};
+                    return (
+                      <div key={w.id} className="item-card">
+                        <img
+                          src={prod.image_url || "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=500&auto=format&fit=crop&q=60"}
+                          alt={prod.name}
+                          className="item-card-image"
+                        />
+                        <div className="item-card-body">
+                          <div className="item-badge-row">
+                            <span className="status-badge" style={{ backgroundColor: "#ecfdf5", color: "#10b981" }}>{prod.condition}</span>
+                            <span style={{ fontSize: "0.75rem", color: "#94a3b8", fontWeight: "600" }}>{prod.category?.name}</span>
+                          </div>
+                          <h4 className="item-title">{prod.name}</h4>
+                          <p style={{ fontSize: "0.85rem", color: "#475569", margin: "0 0 0.75rem 0" }}>{prod.description}</p>
+                          <div className="item-card-footer">
+                            <span className="item-author">By: {prod.user?.name}</span>
+                            <span className="item-price">Rs. {prod.price}</span>
+                          </div>
+                          <button
+                            onClick={() => toggleWishlist(prod.id)}
+                            style={{ marginTop: "0.75rem", width: "100%", padding: "0.5rem", borderRadius: "0.5rem", border: "1px solid #fecdd3", background: "#fff1f2", color: "#e11d48", fontWeight: "600", cursor: "pointer", fontSize: "0.8rem" }}
+                          >
+                            <Heart size={14} style={{ marginRight: "0.4rem" }} /> Remove from Wishlist
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </>
+          )}
+
+          {/* TAB: WANTED REQUESTS */}
+          {activeTab === "wanted" && (
+            <>
+              <div className="section-header">
+                <p style={{ color: "#64748b", margin: 0 }}>
+                  Post what you're looking for. Other students can respond and contact you.
+                </p>
+                <button className="btn-primary" onClick={() => { setEditingWanted(null); setWantedForm({ title: "", description: "", budget: "", condition: "Medium", category_id: "" }); setShowWantedModal(true); }}>
+                  <Plus size={16} /> Post Wanted Request
+                </button>
+              </div>
+
+              <h3 style={{ fontFamily: "var(--font-display)", fontSize: "1.1rem", margin: "1.5rem 0 1rem 0" }}>My Wanted Requests</h3>
+              <div className="table-responsive" style={{ marginBottom: "2.5rem" }}>
+                <table className="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Title</th><th>Budget</th><th>Urgency</th><th>Status</th><th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {myWantedPosts.length === 0 ? (
+                      <tr><td colSpan="5" style={{ textAlign: "center", color: "#64748b" }}>You haven't posted any wanted requests yet.</td></tr>
+                    ) : (
+                      myWantedPosts.map((post) => (
+                        <tr key={post.id}>
+                          <td style={{ fontWeight: "600" }}>{post.title}</td>
+                          <td>Rs. {post.budget || "N/A"}</td>
+                          <td>
+                            <span className={`status-badge ${post.condition === "High" ? "lost" : post.condition === "Low" ? "found" : "pending"}`}>
+                              {post.condition || "Medium"}
+                            </span>
+                          </td>
+                          <td><span className={`status-badge ${post.status}`}>{post.status}</span></td>
+                          <td className="actions-cell">
+                            <button
+                              className="btn-action-approve"
+                              style={{ backgroundColor: "#eff6ff", color: "#2563eb" }}
+                              onClick={() => { setEditingWanted(post); setWantedForm({ title: post.title, description: post.description, budget: post.budget, condition: post.condition, category_id: post.category_id }); setShowWantedModal(true); }}
+                            >
+                              <Edit size={14} />
+                            </button>
+                            {post.status !== "fulfilled" && (
+                              <button
+                                className="btn-action-approve"
+                                style={{ backgroundColor: "#f0fdf4", color: "#16a34a" }}
+                                onClick={() => handleWantedFulfilled(post.id)}
+                                title="Mark as Fulfilled"
+                              >
+                                <CheckCircle size={14} />
+                              </button>
+                            )}
+                            <button className="btn-action-reject" onClick={() => handleWantedDelete(post.id)}>
+                              <Trash2 size={14} />
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              <h3 style={{ fontFamily: "var(--font-display)", fontSize: "1.1rem", margin: "0 0 1rem 0" }}>Browse All Wanted Requests</h3>
+              <div className="cards-grid">
+                {wantedPosts.length === 0 ? (
+                  <p style={{ color: "#64748b" }}>No wanted requests posted by other students yet.</p>
+                ) : (
+                  wantedPosts.filter(p => p.user_id !== student?.id).map((post) => (
+                    <div key={post.id} className="item-card">
+                      <div style={{ height: "100px", background: "linear-gradient(135deg, #6366f1, #8b5cf6)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <Search size={40} style={{ color: "rgba(255,255,255,0.8)" }} />
+                      </div>
+                      <div className="item-card-body">
+                        <div className="item-badge-row">
+                          <span className={`status-badge ${post.condition === "High" ? "lost" : "found"}`}>{post.condition || "Medium"} Priority</span>
+                          <span style={{ fontSize: "0.75rem", color: "#94a3b8", fontWeight: "600" }}>Rs. {post.budget || "N/A"}</span>
+                        </div>
+                        <h4 className="item-title">{post.title}</h4>
+                        <p style={{ fontSize: "0.85rem", color: "#475569", margin: "0 0 0.5rem 0" }}>{post.description}</p>
+                        <div className="item-card-footer">
+                          <span className="item-author">By: {post.user?.name}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </>
+          )}
+
+          {/* TAB: CLAIMS PORTAL */}
+          {activeTab === "claims" && (
+            <>
+              <div className="section-header">
+                <p style={{ color: "#64748b", margin: 0 }}>
+                  Submit ownership claims for found items or review claims made on your reported items.
+                </p>
+              </div>
+
+              <h3 style={{ fontFamily: "var(--font-display)", fontSize: "1.1rem", margin: "1.5rem 0 1rem 0" }}>Claims I Submitted</h3>
+              <div className="table-responsive" style={{ marginBottom: "2.5rem" }}>
+                <table className="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Found Item</th><th>My Claim Message</th><th>Status</th><th>Submitted</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {myClaims.length === 0 ? (
+                      <tr><td colSpan="4" style={{ textAlign: "center", color: "#64748b" }}>You haven't submitted any ownership claims.</td></tr>
+                    ) : (
+                      myClaims.map((claim) => (
+                        <tr key={claim.id}>
+                          <td style={{ fontWeight: "600" }}>{claim.found_item?.name}</td>
+                          <td style={{ maxWidth: "250px", fontSize: "0.85rem" }}>{claim.message}</td>
+                          <td>
+                            <span className={`status-badge ${claim.status === "approved" ? "found" : claim.status === "rejected" ? "lost" : "pending"}`}>
+                              {claim.status}
+                            </span>
+                          </td>
+                          <td style={{ fontSize: "0.8rem", color: "#94a3b8" }}>
+                            {claim.created_at ? new Date(claim.created_at).toLocaleDateString() : "—"}
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              <h3 style={{ fontFamily: "var(--font-display)", fontSize: "1.1rem", margin: "0 0 1rem 0" }}>Claims on My Found Items</h3>
+              <div className="table-responsive">
+                <table className="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Found Item</th><th>Claimed By</th><th>Message</th><th>Status</th><th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {receivedClaims.length === 0 ? (
+                      <tr><td colSpan="5" style={{ textAlign: "center", color: "#64748b" }}>No claims have been filed on your found items.</td></tr>
+                    ) : (
+                      receivedClaims.map((claim) => (
+                        <tr key={claim.id}>
+                          <td style={{ fontWeight: "600" }}>{claim.found_item?.name}</td>
+                          <td>{claim.user?.name}</td>
+                          <td style={{ maxWidth: "220px", fontSize: "0.85rem" }}>{claim.message}</td>
+                          <td>
+                            <span className={`status-badge ${claim.status === "approved" ? "found" : claim.status === "rejected" ? "lost" : "pending"}`}>
+                              {claim.status}
+                            </span>
+                          </td>
+                          <td className="actions-cell">
+                            {claim.status === "pending" && (
+                              <>
+                                <button
+                                  className="btn-action-approve"
+                                  style={{ backgroundColor: "#f0fdf4", color: "#16a34a" }}
+                                  onClick={() => handleClaimStatusUpdate(claim.id, "approved")}
+                                  title="Approve Claim"
+                                >
+                                  <CheckCircle size={14} />
+                                </button>
+                                <button
+                                  className="btn-action-reject"
+                                  onClick={() => handleClaimStatusUpdate(claim.id, "rejected")}
+                                  title="Reject Claim"
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              </>
+                            )}
+                            {claim.status !== "pending" && (
+                              <span style={{ fontSize: "0.8rem", color: "#94a3b8" }}>Reviewed</span>
+                            )}
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
 
           {/* TAB 6: NOTIFICATIONS */}
@@ -1263,6 +1704,135 @@ export default function StudentDashboard() {
               </button>
               <button type="submit" className="btn-primary">
                 List Product
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* MODAL: WANTED REQUEST */}
+      {showWantedModal && (
+        <div className="modal-overlay">
+          <form onSubmit={handleWantedSubmit} className="modal-content">
+            <div className="modal-header">
+              <h3 className="modal-title">{editingWanted ? "Edit Wanted Request" : "Post New Wanted Request"}</h3>
+              <button type="button" className="modal-close-btn" onClick={() => { setShowWantedModal(false); setEditingWanted(null); }}>
+                <X size={18} />
+              </button>
+            </div>
+            {errorMsg && <div className="dashboard-error-banner" style={{ margin: "1rem" }}>{errorMsg}</div>}
+            <div className="modal-body">
+              <div className="form-group">
+                <label className="form-label">Title *</label>
+                <input
+                  type="text"
+                  className="form-input"
+                  placeholder="e.g. Looking for Data Structures Book"
+                  value={wantedForm.title}
+                  onChange={(e) => setWantedForm({ ...wantedForm, title: e.target.value })}
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Description *</label>
+                <textarea
+                  className="form-input"
+                  rows={3}
+                  placeholder="Describe what you need, edition, condition etc."
+                  value={wantedForm.description}
+                  onChange={(e) => setWantedForm({ ...wantedForm, description: e.target.value })}
+                  required
+                  style={{ resize: "vertical" }}
+                />
+              </div>
+
+              <div className="grid-2col">
+                <div className="form-group">
+                  <label className="form-label">Budget (Rs.)</label>
+                  <input
+                    type="number"
+                    className="form-input"
+                    placeholder="e.g. 1500"
+                    value={wantedForm.budget}
+                    onChange={(e) => setWantedForm({ ...wantedForm, budget: e.target.value })}
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Urgency Level</label>
+                  <select
+                    className="form-input campus-select"
+                    value={wantedForm.condition}
+                    onChange={(e) => setWantedForm({ ...wantedForm, condition: e.target.value })}
+                  >
+                    <option value="High">High — Need it ASAP</option>
+                    <option value="Medium">Medium — Within a week</option>
+                    <option value="Low">Low — Flexible</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Category</label>
+                <select
+                  className="form-input campus-select"
+                  value={wantedForm.category_id}
+                  onChange={(e) => setWantedForm({ ...wantedForm, category_id: e.target.value })}
+                >
+                  <option value="">Select Category (optional)</option>
+                  {categories.map((c) => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button type="button" className="btn-secondary" onClick={() => { setShowWantedModal(false); setEditingWanted(null); }}>
+                Cancel
+              </button>
+              <button type="submit" className="btn-primary">
+                {editingWanted ? "Update Request" : "Post Request"}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* MODAL: SUBMIT CLAIM */}
+      {showClaimModal && (
+        <div className="modal-overlay">
+          <form onSubmit={handleClaimSubmit} className="modal-content" style={{ maxWidth: "480px" }}>
+            <div className="modal-header">
+              <h3 className="modal-title">Submit Ownership Claim</h3>
+              <button type="button" className="modal-close-btn" onClick={() => { setShowClaimModal(false); setClaimMessage(""); }}>
+                <X size={18} />
+              </button>
+            </div>
+            {errorMsg && <div className="dashboard-error-banner" style={{ margin: "1rem" }}>{errorMsg}</div>}
+            <div className="modal-body">
+              <p style={{ fontSize: "0.9rem", color: "#475569", marginBottom: "1rem" }}>
+                Describe proof that this item belongs to you (e.g. serial number, unique markings, photos).
+              </p>
+              <div className="form-group">
+                <label className="form-label">Ownership Description *</label>
+                <textarea
+                  className="form-input"
+                  rows={5}
+                  placeholder="Describe how you can prove this item is yours..."
+                  value={claimMessage}
+                  onChange={(e) => setClaimMessage(e.target.value)}
+                  required
+                  style={{ resize: "vertical" }}
+                />
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button type="button" className="btn-secondary" onClick={() => { setShowClaimModal(false); setClaimMessage(""); }}>
+                Cancel
+              </button>
+              <button type="submit" className="btn-primary">
+                Submit Claim
               </button>
             </div>
           </form>

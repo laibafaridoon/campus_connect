@@ -34,4 +34,46 @@ class AuthController extends Controller {
 
     public function me(Request $request) { return response()->json($request->auth_user); }
     public function logout() { return response()->json(["message" => "Logged out"]); }
+
+    // FR-2 / Module 1: Forgot Password
+    public function forgotPassword(Request $request) {
+        $request->validate(["email" => "required|email|exists:users,email"]);
+
+        $token = bin2hex(random_bytes(32));
+        \Illuminate\Support\Facades\DB::table("password_reset_tokens")->updateOrInsert(
+            ["email" => $request->email],
+            ["token" => Hash::make($token), "created_at" => now()]
+        );
+
+        // NOTE: outgoing mail is not configured for this project yet (see NFR-15 / future
+        // enhancements: email notifications). The reset token is returned directly so the
+        // reset-password flow can be completed and tested end-to-end.
+        return response()->json([
+            "message" => "Password reset token generated.",
+            "reset_token" => $token,
+        ]);
+    }
+
+    public function resetPassword(Request $request) {
+        $request->validate([
+            "email" => "required|email|exists:users,email",
+            "token" => "required",
+            "password" => "required|confirmed|min:6",
+        ]);
+
+        $record = \Illuminate\Support\Facades\DB::table("password_reset_tokens")
+            ->where("email", $request->email)->first();
+
+        if (!$record || !Hash::check($request->token, $record->token)) {
+            return response()->json(["message" => "Invalid or expired reset token"], 400);
+        }
+        if (now()->diffInMinutes($record->created_at) > 60) {
+            return response()->json(["message" => "Reset token has expired"], 400);
+        }
+
+        User::where("email", $request->email)->update(["password" => Hash::make($request->password)]);
+        \Illuminate\Support\Facades\DB::table("password_reset_tokens")->where("email", $request->email)->delete();
+
+        return response()->json(["message" => "Password has been reset successfully"]);
+    }
 }

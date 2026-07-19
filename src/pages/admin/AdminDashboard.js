@@ -30,6 +30,7 @@ export default function AdminDashboard() {
   const [recentActivities, setRecentActivities] = useState([]);
   const [barChartData, setBarChartData] = useState([]);
   const [donutChartData, setDonutChartData] = useState([]);
+  const [wantedPosts, setWantedPosts] = useState([]);
   const COLORS = ['#a855f7', '#3b82f6', '#34d399', '#60a5fa', '#fbbf24', '#f87171'];
   
   // Category Form State
@@ -53,6 +54,7 @@ export default function AdminDashboard() {
       fetchLostFoundItems();
       fetchProducts();
       fetchCategories();
+      fetchWantedPosts();
     }
   }, [admin, activeTab]);
 
@@ -88,7 +90,7 @@ export default function AdminDashboard() {
 
   const fetchStudents = async () => {
     try {
-      const res = await axios.get("/admin/students");
+      const res = await axios.get("/admin/users");
       setStudents(res.data || []);
     } catch (e) {
       console.error('Failed to load students', e);
@@ -115,7 +117,7 @@ export default function AdminDashboard() {
 
   const fetchProducts = async () => {
     try {
-      const res = await axios.get("/admin/products");
+      const res = await axios.get("/admin/pending-products");
       setProducts(res.data || []);
     } catch (e) {
       console.error('Failed to load products', e);
@@ -213,6 +215,30 @@ export default function AdminDashboard() {
     }
   };
 
+  const fetchWantedPosts = async () => {
+    try {
+      const res = await axios.get("/admin/wanted-posts");
+      setWantedPosts(res.data || []);
+    } catch (e) {
+      console.error("Failed to load wanted posts", e);
+      setWantedPosts([]);
+    }
+  };
+
+  const handleWantedPostDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to remove this wanted request?")) return;
+    setSuccessMsg("");
+    setErrorMsg("");
+    try {
+      await axios.delete(`/admin/wanted-posts/${id}`);
+      setSuccessMsg("Wanted request removed.");
+      fetchWantedPosts();
+    } catch (e) {
+      console.error("Failed to remove wanted post", e);
+      setErrorMsg("Failed to remove wanted request.");
+    }
+  };
+
   // Categories CRUD
   const handleCategoryCreate = async (e) => {
     e.preventDefault();
@@ -298,6 +324,12 @@ export default function AdminDashboard() {
               <span>Categories Manager</span>
             </button>
           </li>
+          <li className="db-sidebar-item">
+            <button className={`db-sidebar-link ${activeTab === "wantedposts" ? "active" : ""}`} onClick={() => { setActiveTab("wantedposts"); setSidebarOpen(false); }}>
+              <ShoppingBag size={18} />
+              <span>Wanted Posts</span>
+            </button>
+          </li>
         </ul>
 
         <div className="db-sidebar-footer">
@@ -321,6 +353,7 @@ export default function AdminDashboard() {
               {activeTab === "lostfound" && "Lost & Found Reports Management"}
               {activeTab === "products" && "Product Listings Moderation"}
               {activeTab === "categories" && "System Categories Manager"}
+              {activeTab === "wantedposts" && "Wanted Item Posts Management"}
             </h1>
           </div>
           <div className="db-header-actions">
@@ -684,6 +717,52 @@ export default function AdminDashboard() {
                   </tbody>
                 </table>
               </div>
+            </div>
+          )}
+          {activeTab === "wantedposts" && (
+            <div className="table-responsive">
+              <table className="admin-table">
+                <thead>
+                  <tr>
+                    <th>Title</th>
+                    <th>Posted By</th>
+                    <th>Budget</th>
+                    <th>Urgency</th>
+                    <th>Status</th>
+                    <th>Category</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {wantedPosts.length === 0 ? (
+                    <tr>
+                      <td colSpan="7" style={{ textAlign: "center", color: "#64748b" }}>No wanted posts found.</td>
+                    </tr>
+                  ) : (
+                    wantedPosts.map((post) => (
+                      <tr key={post.id}>
+                        <td style={{ fontWeight: "600" }}>{post.title}</td>
+                        <td>{post.user?.name || "—"}</td>
+                        <td>Rs. {post.budget || "N/A"}</td>
+                        <td>
+                          <span className={`status-badge ${post.condition === "High" ? "lost" : post.condition === "Low" ? "found" : "pending"}`}>
+                            {post.condition || "Medium"}
+                          </span>
+                        </td>
+                        <td>
+                          <span className={`status-badge ${post.status}`}>{post.status}</span>
+                        </td>
+                        <td>{post.category?.name || "—"}</td>
+                        <td>
+                          <button className="btn-action-reject" onClick={() => handleWantedPostDelete(post.id)} title="Remove Post">
+                            <Trash2 size={14} />
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
             </div>
           )}
         </main>

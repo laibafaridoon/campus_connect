@@ -1,12 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { motion, useInView } from "framer-motion";
-
-const stats = [
-  { value: 5000, suffix: "+", label: "Students" },
-  { value: 2000, suffix: "+", label: "Products Listed" },
-  { value: 800, suffix: "+", label: "Lost Items Recovered" },
-  { value: 1500, suffix: "+", label: "Successful Exchanges" },
-];
+import axios from "axios";
 
 function Counter({ to, suffix }) {
   const ref = useRef(null);
@@ -26,6 +20,30 @@ function Counter({ to, suffix }) {
 }
 
 export default function Stats() {
+  const [data, setData] = useState({
+    students: 0,
+    products: 0,
+    lost_recovered: 0,
+    claims: 0
+  });
+
+  useEffect(() => {
+    axios.get("/public/stats")
+      .then(res => {
+        if (res.data) {
+          setData(res.data);
+        }
+      })
+      .catch(err => console.error("Failed to load public stats", err));
+  }, []);
+
+  const stats = [
+    { value: data.students, suffix: "+", label: "Students Registered" },
+    { value: data.products, suffix: "+", label: "Products Listed" },
+    { value: data.lost_recovered, suffix: "+", label: "Lost Items Recovered" },
+    { value: data.claims, suffix: "+", label: "Successful Exchange Claims" },
+  ];
+
   return (
     <section className="relative py-20">
       <div className="max-w-7xl mx-auto px-5 sm:px-8">
