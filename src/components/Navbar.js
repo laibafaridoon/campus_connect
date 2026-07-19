@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { GraduationCap, Menu, X } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const links = [
   { label: "Home", href: "#home" },
@@ -11,6 +12,7 @@ const links = [
 ];
 
 export default function Navbar() {
+  const navigate = useNavigate();
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
 
@@ -50,8 +52,8 @@ export default function Navbar() {
         </ul>
 
         <div className="hidden lg:flex items-center gap-3">
-          <button className="px-4 py-2 text-sm font-semibold text-slate-700 hover:text-primary transition">Login</button>
-          <button className="px-5 py-2.5 text-sm font-semibold text-white bg-grad-primary rounded-xl shadow-glow hover:scale-105 hover:shadow-xl transition-all">
+          <button className="px-4 py-2 text-sm font-semibold text-slate-700 hover:text-primary transition" onClick={() => navigate("/login")}>Login</button>
+          <button className="px-5 py-2.5 text-sm font-semibold text-white bg-grad-primary rounded-xl shadow-glow hover:scale-105 hover:shadow-xl transition-all" onClick={() => navigate("/register")}>
             Register
           </button>
         </div>
@@ -68,8 +70,8 @@ export default function Navbar() {
               <a key={l.label} href={l.href} onClick={() => setOpen(false)} className="text-slate-700 font-medium">{l.label}</a>
             ))}
             <div className="flex gap-3 pt-3 border-t border-slate-200">
-              <button className="flex-1 py-2.5 rounded-xl border border-slate-300 font-semibold">Login</button>
-              <button className="flex-1 py-2.5 rounded-xl bg-grad-primary text-white font-semibold">Register</button>
+              <button className="flex-1 py-2.5 rounded-xl border border-slate-300 font-semibold" onClick={() => { setOpen(false); navigate("/login"); }}>Login</button>
+              <button className="flex-1 py-2.5 rounded-xl bg-grad-primary text-white font-semibold" onClick={() => { setOpen(false); navigate("/register"); }}>Register</button>
             </div>
           </div>
         </motion.div>

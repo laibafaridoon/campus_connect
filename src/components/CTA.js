@@ -1,8 +1,10 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { ArrowRight, Compass } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 export default function CTA() {
+  const navigate = useNavigate();
   return (
     <section className="py-24">
       <div className="max-w-7xl mx-auto px-5 sm:px-8">
@@ -17,10 +19,10 @@ export default function CTA() {
             </motion.h2>
             <p className="mt-5 text-white/90 max-w-2xl mx-auto text-lg">Buy smarter, sell faster, and recover lost items with ease.</p>
             <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-              <button className="inline-flex items-center gap-2 px-7 py-4 rounded-xl bg-white text-primary font-bold shadow-soft hover:scale-105 transition">
+              <button className="inline-flex items-center gap-2 px-7 py-4 rounded-xl bg-white text-primary font-bold shadow-soft hover:scale-105 transition" onClick={() => navigate("/register")}>
                 Get Started <ArrowRight size={18} />
               </button>
-              <button className="inline-flex items-center gap-2 px-7 py-4 rounded-xl bg-white/10 border border-white/40 text-white font-bold backdrop-blur hover:bg-white/20 transition">
+              <button className="inline-flex items-center gap-2 px-7 py-4 rounded-xl bg-white/10 border border-white/40 text-white font-bold backdrop-blur hover:bg-white/20 transition" onClick={() => navigate("/login")}>
                 <Compass size={18} /> Explore Marketplace
               </button>
             </div>

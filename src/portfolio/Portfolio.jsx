@@ -430,7 +430,7 @@ export default function Portfolio() {
                   <i class="fas fa-phone"></i>
                   <div>
                     <span class="info-label">Phone</span>
-                    <span class="info-value">0316-3676887</span>
+                    <span class="info-value">+923677777777</span>
                   </div>
                 </div>
                 <div class="info-card">
@@ -472,6 +472,103 @@ export default function Portfolio() {
     ],{"\n"}
   <span class="code-property">  motto</span>: <span class="code-string">"Code with purpose, design with empathy."</span>{"\n"}
 {'}'};</code></pre>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Experience Section */}
+      <section class="section experience" id="experience">
+        <div class="container">
+          <div class="section-header animate-on-scroll">
+            <span class="section-tag">// CAREER PATH</span>
+            <h2 class="section-title"><span class="gradient-text">Experience</span></h2>
+            <p class="section-subtitle">Where I've worked and what I've shipped along the way.</p>
+          </div>
+
+          <div class="experience-wrapper">
+            <div class="experience-timeline animate-on-scroll">
+              <div class="timeline-item">
+                <div class="timeline-marker">
+                  <span class="marker-dot"></span>
+                </div>
+                <div class="timeline-content">
+                  <span class="timeline-year">2026- PRESENT</span>
+                  <h3 class="timeline-title">Frontend &amp; UI/UX Specialist</h3>
+                  <p class="timeline-company">TechNest</p>
+                  <p class="timeline-description">
+                    Engineering and designing high-performing web applications for live, production-ready client projects. Bridging the gap between design and development by crafting intuitive UI/UX layouts and coding them into reality.
+                  </p>
+                </div>
+              </div>
+
+              <div class="timeline-item">
+                <div class="timeline-marker">
+                  <span class="marker-dot"></span>
+                </div>
+                <div class="timeline-content">
+                  <span class="timeline-year">2025 - 2026</span>
+                  <h3 class="timeline-title">UI/UX Design Intern</h3>
+                  <p class="timeline-company">Syntechub</p>
+                  <p class="timeline-description">
+                    Designed intuitive user journeys, site maps, and user flows for web and mobile applications. Crafted visually appealing layouts and prepared clean design files for frontend engineering teams.
+                  </p>
+                </div>
+              </div>
+
+              <div class="timeline-item">
+                <div class="timeline-marker">
+                  <span class="marker-dot"></span>
+                </div>
+                <div class="timeline-content">
+                  <span class="timeline-year">2025 - 2026</span>
+                  <h3 class="timeline-title">UI/UX Design Intern</h3>
+                  <p class="timeline-company">Elite Tech</p>
+                  <p class="timeline-description">
+                    Conducted user research and competitor analysis. Created low-fidelity wireframes and high-fidelity interactive prototypes using Figma. Assisted in building scalable design systems.
+                  </p>
+                </div>
+              </div>
+
+              <div class="timeline-item">
+                <div class="timeline-marker">
+                  <span class="marker-dot"></span>
+                </div>
+                <div class="timeline-content">
+                  <span class="timeline-year">2025 - 2026</span>
+                  <h3 class="timeline-title">Frontend Developer Intern</h3>
+                  <p class="timeline-company">MTech</p>
+                  <p class="timeline-description">
+                    Developed and deployed responsive web pages using HTML, CSS, JavaScript, and modern frameworks. Built reusable UI components and ensured cross-browser compatibility across all devices.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div class="experience-sidebar animate-on-scroll">
+              <div class="sidebar-card">
+                <h4 class="sidebar-title">// QUICK FACTS</h4>
+                <div class="sidebar-item">
+                  <span class="sidebar-label">Location</span>
+                  <span class="sidebar-value">Abbotabad Pakistan</span>
+                </div>
+                <div class="sidebar-item">
+                  <span class="sidebar-label">Availability</span>
+                  <span class="sidebar-value highlight">Open to offers</span>
+                </div>
+                <div class="sidebar-item">
+                  <span class="sidebar-label">Preferred work</span>
+                  <span class="sidebar-value">Remote / Hybrid</span>
+                </div>
+                <div class="sidebar-item">
+                  <span class="sidebar-label">Languages</span>
+                  <span class="sidebar-value">English, Urdu</span>
+                </div>
+                <div class="sidebar-item">
+                  <span class="sidebar-label">Response time</span>
+                  <span class="sidebar-value">&lt; 24 hours</span>
                 </div>
               </div>
             </div>
@@ -660,7 +757,7 @@ export default function Portfolio() {
                   <div class="contact-card-icon"><i class="fas fa-phone-alt"></i></div>
                   <div class="contact-card-info">
                     <span class="contact-card-label">Phone</span>
-                    <span class="contact-card-value">0316-3676887</span>
+                    <span class="contact-card-value">+923677777777</span>
                   </div>
                   <i class="fas fa-arrow-right contact-card-arrow"></i>
                 </a>
@@ -688,14 +785,14 @@ export default function Portfolio() {
                   <label htmlFor="formName">Your Name</label>
                   <div class="input-wrapper">
                     <i class="fas fa-user"></i>
-                    <input type="text" id="formName" placeholder="John Doe" required />
+                    <input type="text" id="formName" placeholder="Your Name" required />
                   </div>
                 </div>
                 <div class="form-group">
                   <label htmlFor="formEmail">Your Email</label>
                   <div class="input-wrapper">
                     <i class="fas fa-envelope"></i>
-                    <input type="email" id="formEmail" placeholder="john@example.com" required />
+                    <input type="email" id="formEmail" placeholder="name@example.com" required />
                   </div>
                 </div>
                 <div class="form-group">
@@ -733,7 +830,7 @@ export default function Portfolio() {
               <a href="https://github.com/laibafaridoon" target="_blank" rel="noopener noreferrer" class="social-link" aria-label="GitHub"><i class="fab fa-github"></i></a>
               <a href="https://www.linkedin.com/in/laiba-faridoon-0a3a46377" target="_blank" rel="noopener noreferrer" class="social-link" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
               <a href="mailto:laibafaridoon@gmail.com" class="social-link" aria-label="Email"><i class="fas fa-envelope"></i></a>
-              <a href="tel:03163676887" class="social-link" aria-label="Phone"><i class="fas fa-phone-alt"></i></a>
+              <a href="tel:+923677777777" class="social-link" aria-label="Phone"><i class="fas fa-phone-alt"></i></a>
             </div>
             <p class="footer-copy">&copy; 2026 Laiba Faridoon. Crafted with <i class="fas fa-heart"></i> and lots of <i class="fas fa-coffee"></i></p>
           </div>

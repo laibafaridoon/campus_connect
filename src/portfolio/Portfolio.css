@@ -304,6 +304,168 @@ img { max-width: 100%; display: block; }
 }
 
 /* ==========================================
+   EXPERIENCE TIMELINE
+   ========================================== */
+.experience-wrapper {
+    display: grid;
+    grid-template-columns: 1fr 350px;
+    gap: 60px;
+    align-items: start;
+}
+
+.experience-timeline {
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+    position: relative;
+}
+
+.experience-timeline::before {
+    content: '';
+    position: absolute;
+    left: 15px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: linear-gradient(to bottom, var(--accent-primary), transparent);
+}
+
+.timeline-item {
+    display: flex;
+    gap: 24px;
+    position: relative;
+}
+
+.timeline-marker {
+    flex-shrink: 0;
+    position: relative;
+    z-index: 2;
+}
+
+.marker-dot {
+    display: block;
+    width: 12px;
+    height: 12px;
+    background: var(--accent-primary);
+    border-radius: 50%;
+    border: 3px solid var(--bg-primary);
+    margin-top: 6px;
+    box-shadow: 0 0 20px rgba(124, 58, 237, 0.6);
+}
+
+.timeline-content {
+    flex: 1;
+    padding-bottom: 8px;
+}
+
+.timeline-year {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--accent-primary);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-weight: 600;
+    display: block;
+    margin-bottom: 6px;
+}
+
+.timeline-title {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+}
+
+.timeline-company {
+    font-size: 0.9rem;
+    color: var(--accent-secondary);
+    margin-bottom: 12px;
+}
+
+.timeline-description {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+
+.experience-sidebar {
+    position: sticky;
+    top: 120px;
+}
+
+.sidebar-card {
+    background: linear-gradient(145deg, rgba(124, 58, 237, 0.08), rgba(59, 130, 246, 0.04));
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    padding: 28px;
+    box-shadow: var(--shadow-md);
+}
+
+.sidebar-title {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--accent-primary);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 24px;
+    display: block;
+}
+
+.sidebar-item {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 20px;
+}
+
+.sidebar-item:last-child {
+    margin-bottom: 0;
+}
+
+.sidebar-label {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+}
+
+.sidebar-value {
+    font-size: 0.95rem;
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.sidebar-value.highlight {
+    color: var(--accent-primary);
+}
+
+@media (max-width: 1024px) {
+    .experience-wrapper {
+        grid-template-columns: 1fr;
+        gap: 40px;
+    }
+    
+    .experience-sidebar {
+        position: static;
+    }
+}
+
+@media (max-width: 768px) {
+    .experience-timeline::before {
+        left: 5px;
+    }
+    
+    .timeline-item {
+        gap: 16px;
+    }
+    
+    .timeline-title {
+        font-size: 1.1rem;
+    }
+}
+
+/* ==========================================
    BUTTONS
    ========================================== */
 .btn {
